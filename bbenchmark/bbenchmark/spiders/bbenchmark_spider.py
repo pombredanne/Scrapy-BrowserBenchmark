@@ -2,10 +2,9 @@ from scrapy.spider import BaseSpider
 
 class BBenchmarkSpider(BaseSpider):
     name = "bbench"
-    allowed_domains = ["dmoz.org"]
+    allowed_domains = ["browsermark.rightware.com"]
     start_urls = [
-        "http://www.dmoz.org/Computers/Programming/Languages/Python/Books/",
-        "http://www.dmoz.org/Computers/Programming/Languages/Python/Resources/"
+        "http://browsermark.rightware.com/"
     ]
 
     def parse(self, response):
