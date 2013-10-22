@@ -19,7 +19,7 @@ DOWNLOADER_HTTPCLIENTFACTORY = 'warcclientfactory.WarcHTTPClientFactory'
 # Use priority 820 to capture the data before Scrapy modifies it
 DOWNLOADER_MIDDLEWARES = {'warcmiddleware.WarcMiddleware': 820}
 
-DOWNLOAD_HANDLERS = {
-	'http': 'bbenchmark.spiders.scrapyjs.dhandler.WebkitDownloadHandler',
-	'https': 'bbenchmark.spiders.scrapyjs.dhandler.WebkitDownloadHandler'
-}
+#DOWNLOAD_HANDLERS = {
+#	'http': 'bbenchmark.spiders.scrapyjs.dhandler.WebkitDownloadHandler',
+#	'https': 'bbenchmark.spiders.scrapyjs.dhandler.WebkitDownloadHandler'
+#}
