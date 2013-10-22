@@ -9,9 +9,8 @@ from scrapy import log
 
 class SimpleSpider(BaseSpider):
     name = "simplespider"
-    allowed_domains = ["browsermark.rightware.com"]
     start_urls = [
-        "http://browsermark.rightware.com/"
+        "http://www.baidu.com/"
     ]
 
     @staticmethod
@@ -142,8 +141,6 @@ class SimpleSpider(BaseSpider):
             if response.headers['Content-Type'] in skip_types:
                 return
             if response.headers['Content-Type'].startswith("text/javascript"):
-				# processing javascripts
-
                 return
         # Get favicon
         yield Request(urlparse.urljoin(response.url, "/favicon.ico"),

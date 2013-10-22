@@ -3,13 +3,14 @@ import webkit
 import jswebkit
 from twisted.internet import defer
 
-from scrapy.core.downloader.handlers.http import HttpDownloadHandler
+from scrapy.core.downloader.handlers.http10 import HTTP10DownloadHandler
+#from scrapy.core.downloader.handlers.http import HttpDownloadHandler
 from scrapy.http import HtmlResponse
 from scrapy import log
 
 #gtk.gdk.threads_init()
 
-class WebkitDownloadHandler(HttpDownloadHandler):
+class WebkitDownloadHandler(HTTP10DownloadHandler):
 
     def download_request(self, request, spider):
         if 'renderjs' in request.meta:
