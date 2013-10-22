@@ -17,9 +17,5 @@ NEWSPIDER_MODULE = 'bbenchmark.spiders'
 DOWNLOADER_HTTPCLIENTFACTORY = 'warcclientfactory.WarcHTTPClientFactory'
 
 # Use priority 820 to capture the data before Scrapy modifies it
-DOWNLOADER_MIDDLEWARES = {'warcmiddleware.WarcMiddleware': 820}
+DOWNLOADER_MIDDLEWARES = {'warcmiddleware.WebkitDownloader': 820}
 
-#DOWNLOAD_HANDLERS = {
-#	'http': 'bbenchmark.spiders.scrapyjs.dhandler.WebkitDownloadHandler',
-#	'https': 'bbenchmark.spiders.scrapyjs.dhandler.WebkitDownloadHandler'
-#}

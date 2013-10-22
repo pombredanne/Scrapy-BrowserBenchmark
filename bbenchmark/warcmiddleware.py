@@ -7,6 +7,13 @@ from scrapy.utils.httpobj import urlparse_cached
 
 import warcrecords
 
+from scrapy.http import HtmlResponse
+
+import gtk
+import webkit
+import jswebkit
+
+
 # from scrapy/core/downloader/webclient.py
 def _parsed_url_args(parsed):
     path = urlparse.urlunparse(('', '', parsed.path or '/', parsed.params,
@@ -83,3 +90,28 @@ class WarcMiddleware(object):
         record = self.warcrec_from_scrapy_response(response)
         record.write_to(self.fo)
         return response # return the response to Scrapy for further handling
+
+class WebkitDownloader( WarcMiddleware ):
+
+    def stop_gtk(self, v, f):
+        gtk.main_quit()
+
+    def _get_webview(self):
+        webview = webkit.WebView()
+        props = webview.get_settings()
+        props.set_property('enable-java-applet', False)
+        props.set_property('enable-plugins', False)
+        props.set_property('enable-page-cache', False)
+        return webview
+
+    def process_request( self, request, spider ):
+        if 'renderjs' in request.meta:
+            webview = self._get_webview()
+            webview.connect('load-finished', self.stop_gtk)
+            webview.load_uri(request.url)
+            gtk.main()
+            ctx = jswebkit.JSContext(webview.get_main_frame().get_global_context())
+            url = ctx.EvaluateScript('window.location.href')
+            html = ctx.EvaluateScript('document.documentElement.innerHTML')
+            return HtmlResponse(url, encoding='utf-8', body=html.encode('utf-8'))
+
