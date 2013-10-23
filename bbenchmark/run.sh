@@ -1,2 +1,3 @@
 #!/bin/bash
-python crawler.py -u http://jekyllrb.com
+python crawler.py -u http://10.1.47.72/
+

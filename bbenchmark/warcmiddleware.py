@@ -12,7 +12,8 @@ from scrapy.http import HtmlResponse
 import gtk
 import webkit
 import jswebkit
-
+import gzip
+import StringIO
 
 # from scrapy/core/downloader/webclient.py
 def _parsed_url_args(parsed):
@@ -67,6 +68,13 @@ class WarcMiddleware(object):
         
         return warcrecords.WarcRequestRecord(url=request.url, block=request_str)
 
+
+    def decode(self, page):
+        data = gzip.GzipFile('', 'rb', 9, StringIO.StringIO(page))
+        page = data.read()
+
+        return page
+
     """
     Converts a Scrapy response to a WarcResponseRecord
     
@@ -78,7 +86,11 @@ class WarcMiddleware(object):
         resp_str = "HTTP/1.0 " + str(response.status) + " OK\r\n"
         resp_str += response.headers.to_string()
         resp_str += "\r\n\r\n"
-        resp_str += response.body
+        encoding = response.headers.get("Content-Encoding")    
+        if encoding in ('gzip', 'x-gzip', 'deflate'):
+            resp_str += self.decode(response.body)
+        else:
+            resp_str += response.body
 
         return warcrecords.WarcResponseRecord(url=response.url, block=resp_str)
 
@@ -92,25 +104,49 @@ class WarcMiddleware(object):
         return response # return the response to Scrapy for further handling
 
 class WebkitDownloader( WarcMiddleware ):
-
+	
     def stop_gtk(self, v, f):
         gtk.main_quit()
 
+    def reload_page_yq(self, v, f):
+        self.webview.connect('load-finished', self.stop_gtk)
+        ctx = jswebkit.JSContext(self.webview.get_main_frame().get_global_context())
+        ctx.EvaluateScript('''a = function __inserted__() { 
+							var anchors = document.getElementsByTagName('a'); 
+								for (var i = 0; i < anchors.length; ++i) 
+								 { 
+									if (anchors[i].innerText === 'Graphics HTML5 Canvas') {
+									 anchors[i].click(); 
+									 break; 
+								} 
+							}
+							return 0;
+						}''')
+ 
     def _get_webview(self):
-        webview = webkit.WebView()
-        props = webview.get_settings()
+        self.webview = webkit.WebView()
+        props = self.webview.get_settings()
         props.set_property('enable-java-applet', False)
         props.set_property('enable-plugins', False)
         props.set_property('enable-page-cache', False)
-        return webview
 
     def process_request( self, request, spider ):
-        if 'renderjs' in request.meta:
-            webview = self._get_webview()
-            webview.connect('load-finished', self.stop_gtk)
-            webview.load_uri(request.url)
+        if 'triggerjs' in request.meta:
+            self._get_webview()
+            self.webview.connect('load-finished', self.reload_page_yq)
+            self.webview.load_uri(request.url)
             gtk.main()
-            ctx = jswebkit.JSContext(webview.get_main_frame().get_global_context())
+            ctx = jswebkit.JSContext(self.webview.get_main_frame().get_global_context())
+            url = ctx.EvaluateScript('window.location.href')
+            html = ctx.EvaluateScript('document.documentElement.innerHTML')
+            return HtmlResponse(url, encoding='utf-8', body=html.encode('utf-8'))
+
+        if 'renderjs' in request.meta:
+            self._get_webview()
+            self.webview.connect('load-finished', self.stop_gtk)
+            self.webview.load_uri(request.url)
+            gtk.main()
+            ctx = jswebkit.JSContext(self.webview.get_main_frame().get_global_context())
             url = ctx.EvaluateScript('window.location.href')
             html = ctx.EvaluateScript('document.documentElement.innerHTML')
             return HtmlResponse(url, encoding='utf-8', body=html.encode('utf-8'))

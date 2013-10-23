@@ -9,9 +9,6 @@ from scrapy import log
 
 class SimpleSpider(BaseSpider):
     name = "simplespider"
-    start_urls = [
-        "http://www.baidu.com/"
-    ]
 
     @staticmethod
     def load_sitemap(sitemap):
@@ -130,6 +127,11 @@ class SimpleSpider(BaseSpider):
             abs_url = urlparse.urljoin(response.url, rel_url)
             yield Request(abs_url, callback=lambda _: None)
 
+    def make_requests_from_url(self, url):
+        request = super(SimpleSpider, self).make_requests_from_url(url)
+        request.meta['triggerjs'] = True
+        return request
+
     """
     Crawls content in a response
 
@@ -156,7 +158,7 @@ class SimpleSpider(BaseSpider):
                                 accept_netlocs=self.accept_netlocs,
                                 regs_accept=self.regs_accept,
                                 regs_reject=self.regs_reject):
-                yield Request(abs_url)
+                yield Request(abs_url, meta={'renderjs': True})
 
         # Parses for images
         image_tags = hxs.select('//img/@src').extract()
